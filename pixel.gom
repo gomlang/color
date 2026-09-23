@@ -1,0 +1,225 @@
+package color;
+
+use std::num::{ToFloat, TryToInt};
+
+#[derive(PartialEq, Eq, Debug)]
+pub struct Nrgba8 {
+    red: u8,
+    green: u8,
+    blue: u8,
+    alpha: u8,
+}
+
+#[derive(PartialEq, Eq, Debug)]
+pub struct Rgba8 {
+    red: u8,
+    green: u8,
+    blue: u8,
+    alpha: u8,
+}
+
+#[derive(PartialEq, Eq, Debug)]
+pub struct Rgba16 {
+    red: u16,
+    green: u16,
+    blue: u16,
+    alpha: u16,
+}
+
+fn word(value: f64) -> u16 {
+    match std::math::round(clamp(value, 0.0, 1.0) * 65535.0).try_to_u16() {
+        Ok(value) => value,
+        Err(_) => 0,
+    }
+}
+
+fn premultiply8(channel: u8, alpha: u8) -> u8 {
+    ((channel.to_u32() * alpha.to_u32() + 127) / 255).to_u8()
+}
+
+fn unpremultiply8(channel: u8, alpha: u8) -> u8 {
+    if alpha == 0 {
+        0
+    } else {
+        let result = (channel.to_u32() * 255 + alpha.to_u32() / 2) / alpha.to_u32();
+        if result > 255 {
+            255
+        } else {
+            result.to_u8()
+        }
+    }
+}
+
+impl Nrgba8 {
+    pub fn new(red: u8, green: u8, blue: u8, alpha: u8) -> Nrgba8 {
+        Nrgba8 { red, green, blue, alpha }
+    }
+
+    pub fn red(self: Nrgba8) -> u8 {
+        self.red
+    }
+
+    pub fn green(self: Nrgba8) -> u8 {
+        self.green
+    }
+
+    pub fn blue(self: Nrgba8) -> u8 {
+        self.blue
+    }
+
+    pub fn alpha(self: Nrgba8) -> u8 {
+        self.alpha
+    }
+
+    pub fn to_srgb(self: Nrgba8) -> Srgb {
+        Srgb::from_rgba8(self.red, self.green, self.blue, self.alpha)
+    }
+
+    pub fn to_rgba8(self: Nrgba8) -> Rgba8 {
+        Rgba8 {
+            red: premultiply8(self.red, self.alpha),
+            green: premultiply8(self.green, self.alpha),
+            blue: premultiply8(self.blue, self.alpha),
+            alpha: self.alpha,
+        }
+    }
+
+    pub fn to_rgba16(self: Nrgba8) -> Rgba16 {
+        let alpha = self.alpha.to_u32();
+        Rgba16 {
+            red: ((self.red.to_u32() * 257 * alpha) / 255).to_u16(),
+            green: ((self.green.to_u32() * 257 * alpha) / 255).to_u16(),
+            blue: ((self.blue.to_u32() * 257 * alpha) / 255).to_u16(),
+            alpha: (alpha * 257).to_u16(),
+        }
+    }
+}
+
+impl Rgba8 {
+    pub fn new(red: u8, green: u8, blue: u8, alpha: u8) -> Result[Rgba8, Error] {
+        if red > alpha || green > alpha || blue > alpha {
+            return Result::Err(Error::OutOfRange("premultiplied RGBA8 channel exceeds alpha"))
+        }
+        Result::Ok(Rgba8 { red, green, blue, alpha })
+    }
+
+    pub fn red(self: Rgba8) -> u8 {
+        self.red
+    }
+
+    pub fn green(self: Rgba8) -> u8 {
+        self.green
+    }
+
+    pub fn blue(self: Rgba8) -> u8 {
+        self.blue
+    }
+
+    pub fn alpha(self: Rgba8) -> u8 {
+        self.alpha
+    }
+
+    pub fn to_nrgba8(self: Rgba8) -> Nrgba8 {
+        Nrgba8 {
+            red: unpremultiply8(self.red, self.alpha),
+            green: unpremultiply8(self.green, self.alpha),
+            blue: unpremultiply8(self.blue, self.alpha),
+            alpha: self.alpha,
+        }
+    }
+
+    pub fn to_srgb(self: Rgba8) -> Srgb {
+        self.to_nrgba8().to_srgb()
+    }
+
+    pub fn to_rgba16(self: Rgba8) -> Rgba16 {
+        Rgba16 {
+            red: (self.red.to_u32() * 257).to_u16(),
+            green: (self.green.to_u32() * 257).to_u16(),
+            blue: (self.blue.to_u32() * 257).to_u16(),
+            alpha: (self.alpha.to_u32() * 257).to_u16(),
+        }
+    }
+}
+
+impl Rgba16 {
+    pub fn new(red: u16, green: u16, blue: u16, alpha: u16) -> Result[Rgba16, Error] {
+        if red > alpha || green > alpha || blue > alpha {
+            return Result::Err(Error::OutOfRange("premultiplied RGBA16 channel exceeds alpha"))
+        }
+        Result::Ok(Rgba16 { red, green, blue, alpha })
+    }
+
+    pub fn red(self: Rgba16) -> u16 {
+        self.red
+    }
+
+    pub fn green(self: Rgba16) -> u16 {
+        self.green
+    }
+
+    pub fn blue(self: Rgba16) -> u16 {
+        self.blue
+    }
+
+    pub fn alpha(self: Rgba16) -> u16 {
+        self.alpha
+    }
+
+    pub fn to_srgb(self: Rgba16) -> Srgb {
+        if self.alpha == 0 {
+            return Srgb::transparent()
+        }
+        Srgb {
+            r: self.red.to_f64() / self.alpha.to_f64(),
+            g: self.green.to_f64() / self.alpha.to_f64(),
+            b: self.blue.to_f64() / self.alpha.to_f64(),
+            alpha: self.alpha.to_f64() / 65535.0,
+        }
+    }
+
+    pub fn to_rgba8(self: Rgba16) -> Rgba8 {
+        let alpha = ((self.alpha.to_u32() + 128) / 257).to_u8();
+        Rgba8 {
+            red: ((self.red.to_u32() + 128) / 257).to_u8(),
+            green: ((self.green.to_u32() + 128) / 257).to_u8(),
+            blue: ((self.blue.to_u32() + 128) / 257).to_u8(),
+            alpha,
+        }
+    }
+}
+
+impl Srgb {
+    pub fn to_nrgba8(self: Srgb) -> Nrgba8 {
+        Nrgba8::new(byte(self.r), byte(self.g), byte(self.b), byte(self.alpha))
+    }
+
+    pub fn to_premultiplied_rgba8(self: Srgb) -> Rgba8 {
+        self.to_nrgba8().to_rgba8()
+    }
+
+    pub fn to_premultiplied_rgba16(self: Srgb) -> Rgba16 {
+        let alpha = word(self.alpha);
+        let red = word(self.r * self.alpha);
+        let green = word(self.g * self.alpha);
+        let blue = word(self.b * self.alpha);
+        Rgba16 {
+            red: if red > alpha {
+                alpha
+            } else {
+                red
+            },
+            green: if green > alpha {
+                alpha
+            } else {
+                green
+            },
+            blue: if blue > alpha {
+                alpha
+            } else {
+                blue
+            },
+            alpha,
+        }
+    }
+}

@@ -1,0 +1,85 @@
+package palette;
+
+use ecosystem::color::{Srgb, Error};
+
+pub struct Palette {
+    colors: Vec[Srgb],
+}
+
+fn distance(left: Srgb, right: Srgb) -> f64 {
+    let left = left.to_linear();
+    let right = right.to_linear();
+    let red = left.red() * left.alpha() - right.red() * right.alpha();
+    let green = left.green() * left.alpha() - right.green() * right.alpha();
+    let blue = left.blue() * left.alpha() - right.blue() * right.alpha();
+    let alpha = left.alpha() - right.alpha();
+    red * red + green * green + blue * blue + alpha * alpha
+}
+
+impl Palette {
+    pub fn new(colors: Vec[Srgb]) -> Result[Palette, Error] {
+        if colors.len() == 0 || colors.len() > 65536 {
+            return Result::Err(Error::OutOfRange("palette requires 1 through 65536 colors"))
+        }
+        let snapshot: Vec[Srgb] = Vec::with_capacity(colors.len());
+        for color in colors {
+            snapshot.push(color);
+        }
+        Result::Ok(Palette { colors: snapshot })
+    }
+
+    pub fn web_safe() -> Palette {
+        let colors: Vec[Srgb] = Vec::with_capacity(216);
+        for red in 0..6 {
+            for green in 0..6 {
+                for blue in 0..6 {
+                    colors.push(
+                        Srgb::from_rgb8(
+                            (red * 51).to_u8(),
+                            (green * 51).to_u8(),
+                            (blue * 51).to_u8(),
+                        ),
+                    );
+                }
+            }
+        }
+        Palette { colors }
+    }
+
+    pub fn len(self: Palette) -> isize {
+        self.colors.len()
+    }
+
+    pub fn get(self: Palette, index: isize) -> Option[Srgb] {
+        if index < 0 || index >= self.colors.len() {
+            Option::None
+        } else {
+            Option::Some(self.colors[index])
+        }
+    }
+
+    pub fn colors(self: Palette) -> Vec[Srgb] {
+        let snapshot: Vec[Srgb] = Vec::with_capacity(self.colors.len());
+        for color in self.colors {
+            snapshot.push(color);
+        }
+        snapshot
+    }
+
+    pub fn nearest_index(self: Palette, color: Srgb) -> isize {
+        let mut best_index = 0;
+        let mut best_distance = distance(color, self.colors[0]);
+        for index in 1..self.colors.len() {
+            let candidate = distance(color, self.colors[index]);
+            if candidate < best_distance {
+                best_index = index;
+                best_distance = candidate;
+            }
+        }
+        best_index
+    }
+
+    pub fn nearest(self: Palette, color: Srgb) -> Srgb {
+        self.colors[self.nearest_index(color)]
+    }
+}

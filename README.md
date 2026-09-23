@@ -30,7 +30,7 @@ fn theme() -> Result[Vec[Srgb], color::Error] {
 
 ## Models and conversion
 
-Every model has private fields, a checked `new(...) -> Result[Model, Error]`
+Every floating-point model has private fields, a checked `new(...) -> Result[Model, Error]`
 constructor, channel accessors, `alpha()`, `PartialEq` and `Debug`. Every
 constructor takes alpha last. Alpha, sRGB channels, HSL saturation/lightness and
 HSV saturation/value must be finite and in `[0, 1]`. Floating equality is exact;
@@ -67,6 +67,28 @@ constructors. `black()`, `white()` and `transparent()` are convenience
 constructors. `with_alpha(alpha)` validates the replacement alpha.
 `to_rgb8()` / `to_rgba8()` return tuples, quantizing to nearest integer with
 halfway values rounded upward. RGB byte conversion does not flatten alpha.
+
+`Nrgba8` stores straight, non-premultiplied 8-bit encoded sRGB plus alpha;
+`Rgba8` and `Rgba16` store premultiplied encoded sRGB channels at 8 and 16 bits.
+Their private fields and accessors are `red`, `green`, `blue` and `alpha`.
+`Rgba8::new` / `Rgba16::new` reject channels above alpha. `Nrgba8::new`
+allows hidden RGB at zero alpha, and `to_srgb()` retains it; conversion to a
+premultiplied type necessarily loses those hidden channels. `Srgb` adds
+`to_nrgba8`, `to_premultiplied_rgba8`, and `to_premultiplied_rgba16`. The old
+`to_rgba8()` tuple retains its straight-alpha meaning. Float-to-pixel and
+8-bit downconversion quantize to nearest with halfway values upward. 8-bit
+premultiplication uses `(channel * alpha + 127) / 255`. `Nrgba8.to_rgba16()`
+uses the 16-bit premultiplied expansion `(channel * 257 * alpha) / 255`, matching
+the `image/color.NRGBA.RGBA` convention. `Rgba8.to_rgba16()` expands each byte
+by 257. The `Nrgba8` to `Rgba16` formula truncates the integer division,
+as in Go's color interface. `Rgba16.to_srgb()` unpremultiplies by the 16-bit
+alpha, returning zero RGB at zero alpha. Integer downconversion and
+unpremultiplication are lossy.
+The pixel operations work in encoded sRGB; `composite_over` remains a separate
+linear-light operation.
+
+The nested [`palette`](palette/README.md) package provides immutable, bounded
+palettes and nearest-color lookup over premultiplied linear-light RGBA.
 
 `decode_srgb(channel)` and `encode_srgb(channel)` expose the piecewise transfer
 functions, including sign-preserving extended-channel behavior. They reject
