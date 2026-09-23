@@ -1,0 +1,51 @@
+package tests;
+
+use ecosystem::color::{Srgb};
+use ecosystem::color::palette::{Palette};
+use std::testing;
+
+#[test]
+fn construction_snapshots_input_and_output() -> () {
+    let source = Vec::from_array([Srgb::black(), Srgb::white()]);
+    let palette = testing::expect_ok(Palette::new(source), "palette");
+    source[0] = Srgb::white();
+    testing::assert_eq(palette.len(), 2);
+    testing::assert(palette.get(0) == Option::Some(Srgb::black()));
+    testing::assert(palette.get(-1) == Option::None);
+    testing::assert(palette.get(2) == Option::None);
+    let copy = palette.colors();
+    copy[0] = Srgb::white();
+    testing::assert(palette.get(0) == Option::Some(Srgb::black()));
+}
+
+#[test]
+fn nearest_uses_linear_premultiplied_color_and_first_tie() -> () {
+    let palette = testing::expect_ok(
+        Palette::new(Vec::from_array([Srgb::black(), Srgb::white(), Srgb::white()])),
+        "palette",
+    );
+    testing::assert_eq(palette.nearest_index(Srgb::white()), 1);
+    testing::assert_eq(palette.nearest(Srgb::black()), Srgb::black());
+    let transparent = testing::expect_ok(Srgb::white().with_alpha(0.0), "transparent");
+    let alpha_palette = testing::expect_ok(
+        Palette::new(Vec::from_array([Srgb::black(), Srgb::transparent()])),
+        "alpha palette",
+    );
+    testing::assert_eq(alpha_palette.nearest_index(transparent), 1);
+}
+
+#[test]
+fn web_safe_palette_is_ordered_and_bounded() -> () {
+    let palette = Palette::web_safe();
+    testing::assert_eq(palette.len(), 216);
+    testing::assert(palette.get(0) == Option::Some(Srgb::black()));
+    testing::assert(palette.get(1) == Option::Some(Srgb::from_rgb8(0, 0, 51)));
+    testing::assert(palette.get(215) == Option::Some(Srgb::white()));
+    testing::assert_eq(palette.nearest(Srgb::from_rgb8(0, 0, 50)), Srgb::from_rgb8(0, 0, 51));
+    testing::assert_err(Palette::new(Vec::new()));
+    let too_many: Vec[Srgb] = Vec::with_capacity(65537);
+    for _ in 0..65537 {
+        too_many.push(Srgb::black());
+    }
+    testing::assert_err(Palette::new(too_many));
+}

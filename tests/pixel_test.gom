@@ -1,0 +1,54 @@
+package tests;
+
+use ecosystem::color::{Nrgba8, Rgba8, Rgba16, Srgb};
+use std::testing;
+
+#[test]
+fn straight_pixels_preserve_hidden_rgb_and_convert_to_premultiplied_values() -> () {
+    let hidden = Nrgba8::new(255, 17, 9, 0);
+    testing::assert_eq(hidden.to_srgb().to_nrgba8(), hidden);
+    testing::assert_eq(hidden.to_rgba8(), testing::expect_ok(Rgba8::new(0, 0, 0, 0), "zero"));
+    testing::assert_eq(hidden.to_rgba16(), testing::expect_ok(Rgba16::new(0, 0, 0, 0), "zero"));
+    let half = Nrgba8::new(128, 255, 0, 128);
+    testing::assert_eq(half.to_rgba8(), testing::expect_ok(Rgba8::new(64, 128, 0, 128), "half"));
+    testing::assert_eq(
+        half.to_rgba16(),
+        testing::expect_ok(Rgba16::new(16512, 32896, 0, 32896), "half word"),
+    );
+}
+
+#[test]
+fn premultiplied_pixels_enforce_alpha_and_unpremultiply() -> () {
+    testing::assert_err(Rgba8::new(129, 0, 0, 128));
+    testing::assert_err(Rgba16::new(32769, 0, 0, 32768));
+    let pixel = testing::expect_ok(Rgba8::new(64, 128, 0, 128), "pixel");
+    testing::assert_eq(pixel.to_nrgba8(), Nrgba8::new(128, 255, 0, 128));
+    testing::assert_eq(
+        pixel.to_rgba16(),
+        testing::expect_ok(Rgba16::new(16448, 32896, 0, 32896), "expanded"),
+    );
+    testing::assert_eq(pixel.to_rgba16().to_rgba8(), pixel);
+}
+
+#[test]
+fn float_pixels_quantize_at_each_depth_and_handle_zero_alpha() -> () {
+    let color = testing::expect_ok(Srgb::new(0.5, 0.25, 0.0, 0.5), "color");
+    testing::assert_eq(color.to_nrgba8(), Nrgba8::new(128, 64, 0, 128));
+    testing::assert_eq(
+        color.to_premultiplied_rgba8(),
+        testing::expect_ok(Rgba8::new(64, 32, 0, 128), "byte"),
+    );
+    testing::assert_eq(
+        color.to_premultiplied_rgba16(),
+        testing::expect_ok(Rgba16::new(16384, 8192, 0, 32768), "word"),
+    );
+    let word = testing::expect_ok(Rgba16::new(16384, 8192, 0, 32768), "word");
+    let restored = word.to_srgb();
+    testing::assert(restored.red() == 0.5);
+    testing::assert(restored.green() == 0.25);
+    testing::assert(restored.alpha() > 0.5 && restored.alpha() < 0.50001);
+    testing::assert_eq(
+        testing::expect_ok(Rgba16::new(0, 0, 0, 0), "zero").to_srgb(),
+        Srgb::transparent(),
+    );
+}
