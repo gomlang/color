@@ -212,7 +212,7 @@ color difference, and subnormal-alpha mixing across all six interpolation spaces
 The reference vectors record comparisons of deterministic random colors with `colorsys`, an
 independent rational-matrix implementation, linear compositing and mixing;
 it checks all CSS names, all 34 published CIEDE2000 test pairs, and 810 alpha-boundary
-mixtures against high-precision Decimal arithmetic, including exact subnormal alpha. [Vector provenance](../consumers/color/tests/data/README.md) identifies the original sources and seed.
+mixtures against high-precision Decimal arithmetic, including exact subnormal alpha. [Vector provenance](../../goml-dev/ecosystem/consumers/color/tests/data/README.md) identifies the original sources and seed.
 
 Mathematical definitions, reference matrices and data provenance:
 
