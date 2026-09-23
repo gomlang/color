@@ -1,0 +1,6 @@
+[module]
+path = "consumer::color"
+
+[dependencies]
+"ecosystem::color" = "0.1.0"
+"ecosystem::verification" = "0.1.0"
