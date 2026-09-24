@@ -1,0 +1,16 @@
+package tests;
+
+use ecosystem::color::{Nrgba8, Rgba8, Srgb};
+use ecosystem::color::palette::{Palette};
+use std::testing;
+
+#[test]
+fn published_palette_and_pixel_api() -> () {
+    let palette = Palette::web_safe();
+    let sample = Srgb::from_rgba8(0, 0, 50, 255);
+    testing::assert_eq(palette.nearest(sample), Srgb::from_rgb8(0, 0, 51));
+    let straight = Nrgba8::new(128, 255, 0, 128);
+    let premultiplied = straight.to_rgba8();
+    testing::assert_eq(premultiplied, testing::expect_ok(Rgba8::new(64, 128, 0, 128), "pixel"));
+    testing::assert_eq(premultiplied.to_nrgba8(), straight);
+}
