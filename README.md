@@ -202,17 +202,17 @@ has a different numerical scale from Lab distance.
 ## Verification and sources
 
 From the repository root, `(cd ../verification && just ecosystem-test color)` formats/checks,
-tests the library and independent consumer, verifies cached builds, runs a theme
-palette example, and runs 4,659 independent reference vectors in the consumer’s ordinary GoML tests. No Python runtime or network access is needed.
+tests the library and example, verifies cached builds, runs a theme
+palette example, and runs 4,659 independent reference vectors in the example’s ordinary GoML tests. No Python runtime or network access is needed.
 
 The GoML suite covers constructor errors, transfer thresholds, a 343-color
 conversion grid, extended signed channels, gamut mapping, premultiplied alpha,
 CSS grammar failures, hue paths, gradient snapshots and hard edges, contrast,
-color difference, and subnormal-alpha mixing across all six interpolation spaces. The consumer uses only the published dependency interface.
+color difference, and subnormal-alpha mixing across all six interpolation spaces. `goml verify` checks the example against the published dependency interface.
 The reference vectors record comparisons of deterministic random colors with `colorsys`, an
 independent rational-matrix implementation, linear compositing and mixing;
 it checks all CSS names, all 34 published CIEDE2000 test pairs, and 810 alpha-boundary
-mixtures against high-precision Decimal arithmetic, including exact subnormal alpha. [Vector provenance](consumer/tests/data/README.md) identifies the original sources and seed.
+mixtures against high-precision Decimal arithmetic, including exact subnormal alpha. [Vector provenance](examples/basic/tests/data/README.md) identifies the original sources and seed.
 
 Mathematical definitions, reference matrices and data provenance:
 
@@ -226,3 +226,15 @@ Mathematical definitions, reference matrices and data provenance:
   expected distances. No reference MATLAB code is included.
 - [W3C WCAG relative luminance](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html):
   the luminance and contrast ratio definitions.
+
+## Development and examples
+
+Requires GoML 0.1.55 or newer. The `examples/basic/` example shares the root manifest; test-only helpers are declared in `[dev-dependencies]`. From the library root, run:
+
+```sh
+goml run --example basic
+goml test
+goml verify --timeout 300s
+```
+
+`goml test` builds the example and runs its tests. `goml verify` repeats the example checks as an independent module against an isolated registry snapshot. `(cd ../verification && just ecosystem-test color)` also retains the library-specific smoke and compatibility checks.

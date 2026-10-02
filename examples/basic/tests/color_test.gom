@@ -1,6 +1,6 @@
 package tests;
 
-use consumer::color;
+use ecosystem::color::examples::basic as color;
 use ecosystem::color::{Srgb, LinearRgb, Gamut};
 use std::testing;
 
