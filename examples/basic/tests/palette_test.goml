@@ -14,3 +14,13 @@ fn published_palette_and_pixel_api() -> () {
     testing::assert_eq(premultiplied, testing::expect_ok(Rgba8::new(64, 128, 0, 128), "pixel"));
     testing::assert_eq(premultiplied.to_nrgba8(), straight);
 }
+
+#[test]
+fn published_palette_retains_tiny_alpha_nearest_matches() -> () {
+    let white = testing::expect_ok(Srgb::white().with_alpha(1e-250), "white");
+    let palette = testing::expect_ok(
+        Palette::new(Vec::from_array([Srgb::transparent(), white])),
+        "palette",
+    );
+    testing::assert_eq(palette.nearest(white), white);
+}

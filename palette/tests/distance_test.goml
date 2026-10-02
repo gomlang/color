@@ -1,0 +1,38 @@
+package tests;
+
+use ecosystem::color::{Srgb};
+use ecosystem::color::palette::{Palette};
+use std::testing;
+
+#[test]
+fn tiny_alpha_preserves_nearest_color_and_exact_matches() -> () {
+    for alpha in[1.0, 1e-150, 1e-200, 1e-300] {
+        let black = testing::expect_ok(Srgb::black().with_alpha(alpha), "black");
+        let white = testing::expect_ok(Srgb::white().with_alpha(alpha), "white");
+        let palette = testing::expect_ok(
+            Palette::new(Vec::from_array([black, white, white])),
+            "palette",
+        );
+        testing::assert_eq(palette.nearest_index(white), 1);
+        testing::assert_eq(palette.nearest_index(black), 0);
+        for (gray, expected) in[(187.to_u8(), 0), (188.to_u8(), 1), (255.to_u8(), 1)] {
+            let query = testing::expect_ok(
+                Srgb::from_rgb8(gray, gray, gray).with_alpha(alpha),
+                "query",
+            );
+            testing::assert_eq(palette.nearest_index(query), expected);
+        }
+    }
+}
+
+#[test]
+fn tiny_alpha_distances_include_transparency_and_first_ties() -> () {
+    let visible = testing::expect_ok(Srgb::white().with_alpha(1e-250), "visible");
+    let palette = testing::expect_ok(
+        Palette::new(Vec::from_array([visible, Srgb::transparent()])),
+        "palette",
+    );
+    testing::assert_eq(palette.nearest_index(Srgb::transparent()), 1);
+    let tied = testing::expect_ok(Palette::new(Vec::from_array([visible, visible])), "ties");
+    testing::assert_eq(tied.nearest_index(Srgb::transparent()), 0);
+}
