@@ -30,7 +30,10 @@ fn hex_pair(value: string, index: isize, short: bool) -> Result[u8, Error] {
 }
 
 pub fn parse_hex(value: string) -> Result[Srgb, Error] {
-    let value = value.trim();
+    if value.byte_len() > 4096 {
+        return Result::Err(syntax("input exceeds 4096 bytes"))
+    }
+    let value = trim_css(value);
     if !value.starts_with("#") {
         return Result::Err(syntax("hexadecimal color requires #"))
     }
@@ -61,6 +64,18 @@ fn digit(value: byte) -> bool {
 
 fn whitespace(value: byte) -> bool {
     value == 32 || value == 9 || value == 10 || value == 12 || value == 13
+}
+
+fn trim_css(value: string) -> string {
+    let mut start = 0;
+    let mut end = value.byte_len();
+    while start < end && whitespace(value.byte_get(start)) {
+        start += 1;
+    }
+    while end > start && whitespace(value.byte_get(end - 1)) {
+        end -= 1;
+    }
+    value.byte_slice(start, end)
 }
 
 fn number(value: string) -> Result[f64, Error] {
@@ -159,7 +174,7 @@ pub fn parse(value: string) -> Result[Srgb, Error] {
     if value.byte_len() > 4096 {
         return Result::Err(syntax("input exceeds 4096 bytes"))
     }
-    let value = value.trim().to_ascii_lowercase();
+    let value = trim_css(value).to_ascii_lowercase();
     if value.starts_with("#") {
         return parse_hex(value)
     }
@@ -180,9 +195,9 @@ pub fn parse(value: string) -> Result[Srgb, Error] {
         if raw.len() != 3 && raw.len() != 4 {
             return Result::Err(syntax("expected three channels and optional alpha"))
         }
-        let parts = Vec::from_array([raw[0].trim(), raw[1].trim(), raw[2].trim()]);
+        let parts = Vec::from_array([trim_css(raw[0]), trim_css(raw[1]), trim_css(raw[2])]);
         let alpha = if raw.len() == 4 {
-            percentage(raw[3].trim(), false, 1.0)?
+            percentage(trim_css(raw[3]), false, 1.0)?
         } else {
             1.0
         };
@@ -197,7 +212,7 @@ pub fn parse(value: string) -> Result[Srgb, Error] {
             return Result::Err(syntax("expected three channels"))
         }
         let alpha = if raw.len() == 2 {
-            percentage(raw[1].trim(), false, 1.0)?
+            percentage(trim_css(raw[1]), false, 1.0)?
         } else {
             1.0
         };

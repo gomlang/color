@@ -131,8 +131,7 @@ malformed separator combinations return `Error`.
 
 Like CSS, parsed RGB channels, saturation/lightness and alpha are clamped;
 constructors instead reject out-of-range values. Hue is wrapped after validation.
-`parse` limits input to 4096 bytes, trims surrounding ASCII whitespace and uses
-ASCII CSS whitespace between channels. `currentcolor`, `none`, CSS escapes,
+`parse` and `parse_hex` limit input to 4096 bytes before trimming. Surrounding and channel-separator whitespace is exactly CSS whitespace: space, tab, LF, form feed and CR. Other Unicode whitespace (including NBSP and ideographic space) and vertical tab are rejected, including around comma-separated channels and slash alpha. `currentcolor`, `none`, CSS escapes,
 comments, relative colors, `calc()`, `color()`, `lab()`, `lch()`, `oklab()` and
 `oklch()` syntax are not supported; use typed constructors for those implemented
 spaces. It is a color-value parser, not a CSS tokenizer or stylesheet parser.
