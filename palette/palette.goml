@@ -1,6 +1,7 @@
 package palette;
 
 use ecosystem::color::{Srgb, Error};
+use std::math;
 
 pub struct Palette {
     colors: Vec[Srgb],
@@ -13,7 +14,25 @@ fn distance(left: Srgb, right: Srgb) -> f64 {
     let green = left.green() * left.alpha() - right.green() * right.alpha();
     let blue = left.blue() * left.alpha() - right.blue() * right.alpha();
     let alpha = left.alpha() - right.alpha();
-    red * red + green * green + blue * blue + alpha * alpha
+    let mut scale = 0.0;
+    for component in[red, green, blue, alpha] {
+        let magnitude = if component < 0.0 {
+            -component
+        } else {
+            component
+        };
+        if magnitude > scale {
+            scale = magnitude;
+        }
+    }
+    if scale == 0.0 {
+        return 0.0
+    }
+    let red = red / scale;
+    let green = green / scale;
+    let blue = blue / scale;
+    let alpha = alpha / scale;
+    scale * math::sqrt(red * red + green * green + blue * blue + alpha * alpha)
 }
 
 impl Palette {
