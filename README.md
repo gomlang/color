@@ -12,7 +12,7 @@ state.
 "ecosystem::color" = "0.1.0"
 ```
 
-```gom
+```goml
 use ecosystem::color;
 use ecosystem::color::{Srgb, Gradient, MixSpace, HueDirection, Gamut};
 
@@ -218,7 +218,7 @@ Mathematical definitions, reference matrices and data provenance:
 
 - [W3C CSS Color 4](https://www.w3.org/TR/2026/CRD-css-color-4-20260913/):
   sRGB/XYZ conversion, CSS syntax, hue interpolation, and the 148 named-color
-  values in `named-colors.json` / `named.gom`.
+  values in `named-colors.json` / `named.goml`.
 - [Björn Ottosson's Oklab specification](https://bottosson.github.io/posts/oklab/):
   the 2021 Oklab forward/inverse matrices.
 - [Sharma, Wu and Dalal, CIEDE2000 implementation notes and supplementary data](https://hajim.rochester.edu/ece/sites/gsharma/ciede2000/):
@@ -229,7 +229,7 @@ Mathematical definitions, reference matrices and data provenance:
 
 ## Development and examples
 
-Requires GoML 0.1.55 or newer. The `examples/basic/` example shares the root manifest; test-only helpers are declared in `[dev-dependencies]`. From the library root, run:
+Requires GoML 0.1.56 or newer. The `examples/basic/` example shares the root manifest; test-only helpers are declared in `[dev-dependencies]`. From the library root, run:
 
 ```sh
 goml run --example basic
