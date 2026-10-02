@@ -1,0 +1,47 @@
+package tests;
+
+use ecosystem::color;
+use std::testing;
+
+#[test]
+fn css_whitespace_is_consistent_at_all_parser_boundaries() -> () {
+    for space in[" ", "\t", "\n", "\u000c", "\r"] {
+        testing::assert_eq(
+            testing::expect_ok(color::parse(space + "red" + space), "name"),
+            color::Srgb::from_rgb8(255, 0, 0),
+        );
+        testing::assert_eq(
+            testing::expect_ok(color::parse_hex(space + "#f00" + space), "hex"),
+            color::Srgb::from_rgb8(255, 0, 0),
+        );
+        testing::assert_ok(color::parse("rgb(" + space + "255,0,0," + space + "1" + space + ")"));
+        testing::assert_ok(color::parse("rgb(255 0 0 /" + space + "1" + space + ")"));
+    }
+    for space in["\u000b", "\u0085", "\u00a0", "\u2003", "\u2028", "\u3000"] {
+        for value in[
+            space + "red",
+            "red" + space,
+            space + "#f00",
+            "#f00" + space,
+            "rgb(" + space + "255,0,0)",
+            "rgb(255,0,0," + space + "1)",
+            "rgb(255 0 0 / 1" + space + ")",
+            "hsl(0,100%," + space + "50%)",
+        ] {
+            testing::assert(color::parse(value).is_err());
+        }
+        testing::assert(color::parse_hex(space + "#f00").is_err());
+        testing::assert(color::parse_hex("#f00" + space).is_err());
+    }
+}
+
+#[test]
+fn direct_hex_parser_checks_original_input_budget() -> () {
+    let mut text = "#123456";
+    for _ in 0..4089 {
+        text += " ";
+    }
+    testing::assert_ok(color::parse_hex(text));
+    testing::assert(color::parse_hex(text + " ").is_err());
+    testing::assert(color::parse(text + " ").is_err());
+}
