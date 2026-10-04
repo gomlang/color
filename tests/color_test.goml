@@ -562,3 +562,31 @@ fn mixing_extreme_alpha_endpoints_and_zero_results_remain_finite() -> () {
     testing::assert_eq(survives.alpha(), tiny);
     testing::assert_eq(survives.red(), 1.0);
 }
+
+#[test]
+fn mirrored_gradients_preserve_tiny_negative_positions() -> () {
+    for width in[1e-16, 1e-10, 1e-100, 1e-300, 5e-324] {
+        let gradient = testing::expect_ok(
+            Gradient::new(
+                Vec::from_array(
+                    [
+                        Stop { position: 0.0, color: Srgb::black() },
+                        Stop { position: width, color: Srgb::white() },
+                    ],
+                ),
+                MixSpace::Srgb,
+                Gamut::Clip,
+                Extension::Mirror,
+            ),
+            "narrow mirrored gradient",
+        );
+        testing::assert_eq(
+            testing::expect_ok(gradient.sample(-width), "negative edge"),
+            Srgb::white(),
+        );
+        testing::assert_eq(
+            testing::expect_ok(gradient.sample(-width * 0.5), "negative midpoint"),
+            testing::expect_ok(gradient.sample(width * 0.5), "positive midpoint"),
+        );
+    }
+}

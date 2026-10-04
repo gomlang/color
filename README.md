@@ -190,7 +190,8 @@ the first stop or after the last stop return the respective edge color.
 
 `Extension::{Clamp, Repeat, Mirror}` controls positions outside `[0, 1]`, with
 repeat mapping integer positions to zero and mirror preserving alternating
-endpoints. `sample(position)` accepts finite magnitudes through `1e9` and uses
+endpoints. Mirrored sampling is symmetric around zero, including tiny negative
+positions. `sample(position)` accepts finite magnitudes through `1e9` and uses
 binary search. `samples(count)` returns 0 through 65536 evenly spaced samples;
 one sample means position zero. `evenly_spaced(colors, space, gamut)` constructs
 a clamped gradient. `len()` returns the number of stops.

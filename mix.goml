@@ -224,7 +224,8 @@ impl Gradient {
             Clamp => clamp(position, 0.0, 1.0),
             Repeat => position - math::floor(position),
             Mirror => {
-                let cycle = position - 2.0 * math::floor(position / 2.0);
+                let magnitude = abs(position);
+                let cycle = magnitude - 2.0 * math::floor(magnitude / 2.0);
                 if cycle <= 1.0 {
                     cycle
                 } else {
