@@ -61,6 +61,8 @@ XYZ is relative **D65**, with white `(0.9504559270516716, 1,
 from CSS `lab()`/`lch()` and ICC PCS values using D50. There is no chromatic
 adaptation or ICC profile support. Lab lightness uses the usual nominal
 `0..100` scale; Oklab lightness the nominal `0..1` scale.
+The linear XYZ/Lab branches avoid cancellation against the fixed black offset,
+preserving very small signed coordinates and dark sRGB roundtrips.
 
 `Srgb::from_rgb8(r, g, b)` and `from_rgba8(r, g, b, a)` are infallible byte
 constructors. `black()`, `white()` and `transparent()` are convenience

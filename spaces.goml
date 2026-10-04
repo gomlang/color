@@ -252,11 +252,20 @@ fn lab_curve(value: f64) -> f64 {
     }
 }
 
-fn lab_inverse(value: f64) -> f64 {
+fn lab_curve_difference(a: f64, b: f64) -> f64 {
+    if a <= 216.0 / 24389.0 && b <= 216.0 / 24389.0 {
+        (a - b) * (841.0 / 108.0)
+    } else {
+        lab_curve(a) - lab_curve(b)
+    }
+}
+
+fn lab_inverse(lightness: f64, adjustment: f64) -> f64 {
+    let value = (lightness + 16.0) / 116.0 + adjustment;
     if value > 6.0 / 29.0 {
         value * value * value
     } else {
-        (116.0 * value - 16.0) * 27.0 / 24389.0
+        (lightness + 116.0 * adjustment) * (27.0 / 24389.0)
     }
 }
 
@@ -302,10 +311,18 @@ impl Xyz {
     }
 
     pub fn to_lab(self: Xyz) -> Lab {
-        let x = lab_curve(self.x / 0.9504559270516716);
-        let y = lab_curve(self.y);
-        let z = lab_curve(self.z / 1.0890577507598784);
-        Lab { l: 116.0 * y - 16.0, a: 500.0 * (x - y), b: 200.0 * (y - z), alpha: self.alpha }
+        let x = self.x / 0.9504559270516716;
+        let z = self.z / 1.0890577507598784;
+        Lab {
+            l: if self.y <= 216.0 / 24389.0 {
+                (24389.0 / 27.0) * self.y
+            } else {
+                116.0 * lab_curve(self.y) - 16.0
+            },
+            a: 500.0 * lab_curve_difference(x, self.y),
+            b: 200.0 * lab_curve_difference(self.y, z),
+            alpha: self.alpha,
+        }
     }
 }
 
@@ -335,11 +352,10 @@ impl Lab {
     }
 
     pub fn to_xyz(self: Lab) -> Xyz {
-        let y = (self.l + 16.0) / 116.0;
         Xyz {
-            x: 0.9504559270516716 * lab_inverse(y + self.a / 500.0),
-            y: lab_inverse(y),
-            z: 1.0890577507598784 * lab_inverse(y - self.b / 200.0),
+            x: 0.9504559270516716 * lab_inverse(self.l, self.a / 500.0),
+            y: lab_inverse(self.l, 0.0),
+            z: 1.0890577507598784 * lab_inverse(self.l, -self.b / 200.0),
             alpha: self.alpha,
         }
     }
