@@ -120,7 +120,7 @@ impl Hsl {
     }
 
     pub fn to_srgb(self: Hsl) -> Srgb {
-        let c = (1.0 - abs(2.0 * self.l - 1.0)) * self.s;
+        let c = 2.0 * min(self.l, 1.0 - self.l) * self.s;
         sector(self.h, c, self.l - c / 2.0, self.alpha)
     }
 }
@@ -175,11 +175,14 @@ impl Srgb {
 
     pub fn to_hsl(self: Srgb) -> Hsl {
         let (h, lo, hi) = self.cylindrical();
-        let l = (lo + hi) / 2.0;
+        let sum = lo + hi;
+        let l = sum / 2.0;
         let s = if hi == lo {
             0.0
+        } else if sum <= 1.0 {
+            (hi - lo) / sum
         } else {
-            (hi - lo) / (1.0 - abs(2.0 * l - 1.0))
+            (hi - lo) / ((1.0 - hi) + (1.0 - lo))
         };
         Hsl { h, s: clamp(s, 0.0, 1.0), l, alpha: self.alpha }
     }

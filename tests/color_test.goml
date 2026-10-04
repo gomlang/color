@@ -90,6 +90,58 @@ fn hsl_and_hsv_cover_hue_sectors_and_achromatic_colors() -> () {
 }
 
 #[test]
+fn dark_rgb_to_hsl_preserves_saturation_at_small_channel_magnitudes() -> () {
+    for scale in[1.0, 1e-10, 1e-20, 1e-100, 1e-300] {
+        let value = testing::expect_ok(
+            Srgb::new(0.8 * scale, 0.2 * scale, 0.2 * scale, 0.37),
+            "dark red",
+        );
+        let hsl = value.to_hsl();
+        near(hsl.hue(), 0.0, 0.0);
+        near(hsl.saturation(), 0.6, 0.000000000001);
+        near(hsl.lightness() / scale, 0.5, 0.000000000001);
+        near(hsl.alpha(), 0.37, 0.0);
+    }
+}
+
+#[test]
+fn dark_hsl_to_rgb_preserves_chroma_in_every_hue_sector() -> () {
+    for scale in[1.0, 1e-10, 1e-20, 1e-100, 1e-300] {
+        for (hue, red, green, blue) in[
+            (0.0, 0.8, 0.2, 0.2),
+            (60.0, 0.8, 0.8, 0.2),
+            (120.0, 0.2, 0.8, 0.2),
+            (180.0, 0.2, 0.8, 0.8),
+            (240.0, 0.2, 0.2, 0.8),
+            (300.0, 0.8, 0.2, 0.8),
+        ] {
+            let value = testing::expect_ok(Hsl::new(hue, 0.6, 0.5 * scale, 0.37), "dark HSL").to_srgb();
+            near(value.red() / scale, red, 0.000000000001);
+            near(value.green() / scale, green, 0.000000000001);
+            near(value.blue() / scale, blue, 0.000000000001);
+            near(value.alpha(), 0.37, 0.0);
+        }
+    }
+}
+
+#[test]
+fn near_white_rgb_saturation_uses_the_exact_endpoint_distances() -> () {
+    let step = 1.0 - float64_from_bits(0x3fefffffffffffff);
+    for high_steps in 0..6 {
+        for low_steps in high_steps + 1..8 {
+            let high = 1.0 - high_steps.to_f64() * step;
+            let low = 1.0 - low_steps.to_f64() * step;
+            let value = testing::expect_ok(Srgb::new(high, low, low, 1.0), "near white");
+            near(
+                value.to_hsl().saturation(),
+                (low_steps - high_steps).to_f64() / (low_steps + high_steps).to_f64(),
+                0.000000000001,
+            );
+        }
+    }
+}
+
+#[test]
 fn color_space_roundtrips_preserve_rgb_and_alpha() -> () {
     for r in 0..7 {
         for g in 0..7 {
