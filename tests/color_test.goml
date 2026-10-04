@@ -90,6 +90,29 @@ fn hsl_and_hsv_cover_hue_sectors_and_achromatic_colors() -> () {
 }
 
 #[test]
+fn near_zero_hues_stay_in_the_normalized_nonnegative_interval() -> () {
+    for magnitude in[5e-324, 1e-323, 5e-323, 1e-320, 1e-300, 1e-20] {
+        for sign in[-1.0, 1.0] {
+            let angle = sign * magnitude;
+            let expected = if sign < 0.0 {
+                0.0
+            } else {
+                magnitude
+            };
+            for actual in[
+                testing::expect_ok(Hsl::new(angle, 1.0, 0.5, 1.0), "HSL hue").hue(),
+                testing::expect_ok(Hsv::new(angle, 1.0, 1.0, 1.0), "HSV hue").hue(),
+                testing::expect_ok(Lch::new(50.0, 20.0, angle, 1.0), "LCh hue").hue(),
+                testing::expect_ok(Oklch::new(0.5, 0.2, angle, 1.0), "Oklch hue").hue(),
+            ] {
+                testing::assert_eq(actual, expected);
+                testing::assert(actual >= 0.0 && actual < 360.0);
+            }
+        }
+    }
+}
+
+#[test]
 fn dark_rgb_to_hsl_preserves_saturation_at_small_channel_magnitudes() -> () {
     for scale in[1.0, 1e-10, 1e-20, 1e-100, 1e-300] {
         let value = testing::expect_ok(

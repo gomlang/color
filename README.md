@@ -56,6 +56,9 @@ are limited to magnitude `1e6`; Lab/LCh channels to `1e4`; Oklab/Oklch channels
 to `100`. Conversion output can exceed these input limits: intermediate models
 retain extended, signed color coordinates and are not clipped.
 
+Negative angles so close to zero that their wrapped value rounds to 360 degrees
+normalize to zero, including subnormal values whose division by 360 underflows.
+
 XYZ is relative **D65**, with white `(0.9504559270516716, 1,
 1.0890577507598784)`. Lab/LCh also use this D65 white, so their values differ
 from CSS `lab()`/`lch()` and ICC PCS values using D50. There is no chromatic
