@@ -1,19 +1,19 @@
 package palette;
 
-use ecosystem::color::{Srgb, Error};
+use ecosystem::color::{Srgb, LinearRgb, Error};
 use std::math;
 
 pub struct Palette {
     colors: Vec[Srgb],
 }
 
-fn distance(left: Srgb, right: Srgb) -> f64 {
-    let left = left.to_linear();
-    let right = right.to_linear();
-    let red = left.red() * left.alpha() - right.red() * right.alpha();
-    let green = left.green() * left.alpha() - right.green() * right.alpha();
-    let blue = left.blue() * left.alpha() - right.blue() * right.alpha();
-    let alpha = left.alpha() - right.alpha();
+fn distance(left: LinearRgb, right: LinearRgb, alpha_scale: f64) -> f64 {
+    let left_alpha = left.alpha() / alpha_scale;
+    let right_alpha = right.alpha() / alpha_scale;
+    let red = left.red() * left_alpha - right.red() * right_alpha;
+    let green = left.green() * left_alpha - right.green() * right_alpha;
+    let blue = left.blue() * left_alpha - right.blue() * right_alpha;
+    let alpha = (left.alpha() - right.alpha()) / alpha_scale;
     let mut scale = 0.0;
     for component in[red, green, blue, alpha] {
         let magnitude = if component < 0.0 {
@@ -86,13 +86,23 @@ impl Palette {
     }
 
     pub fn nearest_index(self: Palette, color: Srgb) -> isize {
+        let query = color.to_linear();
         let mut best_index = 0;
-        let mut best_distance = distance(color, self.colors[0]);
+        let mut best = self.colors[0].to_linear();
         for index in 1..self.colors.len() {
-            let candidate = distance(color, self.colors[index]);
-            if candidate < best_distance {
+            let candidate = self.colors[index].to_linear();
+            let mut alpha_scale = query.alpha();
+            for alpha in[best.alpha(), candidate.alpha()] {
+                if alpha > alpha_scale {
+                    alpha_scale = alpha;
+                }
+            }
+            if alpha_scale == 0.0 {
+                continue
+            }
+            if distance(query, candidate, alpha_scale) < distance(query, best, alpha_scale) {
                 best_index = index;
-                best_distance = candidate;
+                best = candidate;
             }
         }
         best_index

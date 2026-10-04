@@ -5,6 +5,73 @@ use ecosystem::color::palette::{Palette};
 use std::testing;
 
 #[test]
+fn subnormal_alpha_preserves_exact_and_nearest_chromatic_matches() -> () {
+    for alpha in[5e-324, 1e-323, 5e-323, 1e-320] {
+        let dark = testing::expect_ok(Srgb::new(0.2, 0.0, 0.0, alpha), "dark");
+        let light = testing::expect_ok(Srgb::new(0.5, 0.0, 0.0, alpha), "light");
+        let query = testing::expect_ok(Srgb::new(0.6, 0.0, 0.0, alpha), "query");
+        let palette = testing::expect_ok(Palette::new(Vec::from_array([dark, light])), "palette");
+        testing::assert_eq(palette.nearest_index(light), 1);
+        testing::assert_eq(palette.nearest_index(query), 1);
+        testing::assert_eq(palette.nearest(query), light);
+    }
+}
+
+#[test]
+fn subnormal_palette_lookup_ignores_opaque_outlier_order_and_retains_first_ties() -> () {
+    let alpha = 5e-324;
+    let dark = testing::expect_ok(Srgb::new(0.2, 0.0, 0.0, alpha), "dark");
+    let light = testing::expect_ok(Srgb::new(0.5, 0.0, 0.0, alpha), "light");
+    let query = testing::expect_ok(Srgb::new(0.6, 0.0, 0.0, alpha), "query");
+    for colors in Vec::from_array(
+        [
+            Vec::from_array([Srgb::white(), dark, light]),
+            Vec::from_array([dark, Srgb::white(), light]),
+            Vec::from_array([dark, light, Srgb::white()]),
+        ],
+    ) {
+        let palette = testing::expect_ok(Palette::new(colors), "mixed palette");
+        testing::assert_eq(palette.nearest(query), light);
+    }
+    let duplicate = testing::expect_ok(
+        Palette::new(Vec::from_array([dark, light, light])),
+        "duplicates",
+    );
+    testing::assert_eq(duplicate.nearest_index(query), 1);
+    let hidden = testing::expect_ok(Srgb::new(0.5, 1.0, 0.0, 0.0), "hidden color");
+    let transparent = testing::expect_ok(
+        Palette::new(Vec::from_array([hidden, Srgb::transparent()])),
+        "transparent ties",
+    );
+    testing::assert_eq(transparent.nearest_index(Srgb::transparent()), 0);
+}
+
+#[test]
+fn palette_lookup_preserves_ratios_between_different_subnormal_alphas() -> () {
+    let source = Vec::from_array(
+        [
+            testing::expect_ok(Srgb::new(0.1, 0.2, 0.3, 0.25), "quarter"),
+            testing::expect_ok(Srgb::new(0.8, 0.3, 0.4, 0.5), "half"),
+            testing::expect_ok(Srgb::new(0.2, 0.9, 0.5, 0.75), "three quarters"),
+            Srgb::white(),
+        ],
+    );
+    let ordinary = testing::expect_ok(Palette::new(source), "ordinary palette");
+    let tiny = Vec::new();
+    for color in source {
+        tiny.push(testing::expect_ok(color.with_alpha(color.alpha() * 2e-323), "scaled alpha"));
+    }
+    let scaled = testing::expect_ok(Palette::new(tiny), "scaled palette");
+    for red in[0.0, 0.3, 0.6, 1.0] {
+        for alpha in[0.0, 0.25, 0.5, 0.75, 1.0] {
+            let query = testing::expect_ok(Srgb::new(red, 0.4, 0.2, alpha), "query");
+            let small = testing::expect_ok(query.with_alpha(alpha * 2e-323), "small query");
+            testing::assert_eq(scaled.nearest_index(small), ordinary.nearest_index(query));
+        }
+    }
+}
+
+#[test]
 fn tiny_alpha_preserves_nearest_color_and_exact_matches() -> () {
     for alpha in[1.0, 1e-150, 1e-200, 1e-300] {
         let black = testing::expect_ok(Srgb::black().with_alpha(alpha), "black");

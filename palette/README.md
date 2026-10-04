@@ -18,6 +18,8 @@ formula.
 153, 204 and 255, ordered by red, then green, then blue. It allocates a fresh
 palette on each call and exposes no mutable global state.
 
-Distance evaluation scales its components before squaring, so tiny nonzero
-alpha differences do not collapse into zero-distance ties through underflow.
-Premultiplied coordinates still have ordinary floating-point rounding.
+Each comparison rescales the query, current best and candidate alpha together
+before premultiplication, then scales distance components before squaring.
+This preserves chromatic differences even at subnormal alpha and when opaque
+outliers appear elsewhere in the palette. Coordinates retain ordinary
+floating-point rounding.
