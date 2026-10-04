@@ -197,6 +197,10 @@ a clamped gradient. `len()` returns the number of stops.
 factors. `Oklab.delta_e(other)` calculates Euclidean Oklab distance. All three
 ignore alpha and compare coordinates under the same white point. Oklab distance
 has a different numerical scale from Lab distance.
+Chroma and color-distance calculations scale small components before squaring,
+so representable tiny differences do not collapse to zero through intermediate
+underflow. Polar conversion preserves the hue of nonzero chromatic coordinates;
+the achromatic borrowing threshold applies only to interpolation.
 
 ## Verification and sources
 

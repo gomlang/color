@@ -1,0 +1,74 @@
+package tests;
+
+use ecosystem::color::{Lab, Oklab};
+use std::math;
+use std::testing;
+
+fn relative_near(actual: f64, expected: f64) -> () {
+    let ratio = actual / expected;
+    testing::assert(ratio > 0.999999999999 && ratio < 1.000000000001);
+}
+
+#[test]
+fn tiny_perceptual_chroma_survives_polar_conversion() -> () {
+    for scale in[1e-100, 1e-200, 1e-300, 2.2250738585072014e-308] {
+        for sign in[-1.0, 1.0] {
+            let lab = testing::expect_ok(
+                Lab::new(50.0, 3.0 * scale, sign * 4.0 * scale, 0.5),
+                "Lab",
+            );
+            let polar = lab.to_lch();
+            relative_near(polar.chroma(), 5.0 * scale);
+            let restored = polar.to_lab();
+            relative_near(restored.a(), lab.a());
+            relative_near(restored.b(), lab.b());
+            testing::assert_eq(restored.lightness(), lab.lightness());
+            testing::assert_eq(restored.alpha(), lab.alpha());
+            let oklab = testing::expect_ok(
+                Oklab::new(0.5, 3.0 * scale, sign * 4.0 * scale, 0.5),
+                "Oklab",
+            );
+            let polar = oklab.to_oklch();
+            relative_near(polar.chroma(), 5.0 * scale);
+            let restored = polar.to_oklab();
+            relative_near(restored.a(), oklab.a());
+            relative_near(restored.b(), oklab.b());
+        }
+    }
+}
+
+#[test]
+fn tiny_perceptual_euclidean_distances_remain_nonzero() -> () {
+    let lab_zero = testing::expect_ok(Lab::new(0.0, 0.0, 0.0, 1.0), "zero Lab");
+    let oklab_zero = testing::expect_ok(Oklab::new(0.0, 0.0, 0.0, 1.0), "zero Oklab");
+    for scale in[1e-100, 1e-200, 1e-300, 2.2250738585072014e-308] {
+        let lab = testing::expect_ok(Lab::new(3.0 * scale, -4.0 * scale, 12.0 * scale, 1.0), "Lab");
+        let oklab = testing::expect_ok(
+            Oklab::new(3.0 * scale, -4.0 * scale, 12.0 * scale, 1.0),
+            "Oklab",
+        );
+        relative_near(lab.delta_e_76(lab_zero), 13.0 * scale);
+        relative_near(oklab.delta_e(oklab_zero), 13.0 * scale);
+        testing::assert_eq(lab.delta_e_76(lab), 0.0);
+        testing::assert_eq(oklab.delta_e(oklab), 0.0);
+    }
+}
+
+#[test]
+fn tiny_perceptual_ciede2000_lightness_chroma_and_hue_distances_survive() -> () {
+    for scale in[1e-100, 1e-200, 1e-300] {
+        let zero = testing::expect_ok(Lab::new(0.0, 0.0, 0.0, 1.0), "black");
+        let lighter = testing::expect_ok(Lab::new(scale, 0.0, 0.0, 1.0), "lighter");
+        relative_near(lighter.delta_e_2000(zero), scale / (1.0 + 37.5 / math::sqrt(2520.0)));
+        let neutral = testing::expect_ok(Lab::new(50.0, 0.0, 0.0, 1.0), "neutral");
+        let left = testing::expect_ok(Lab::new(50.0, scale, 0.0, 1.0), "left");
+        let right = testing::expect_ok(Lab::new(50.0, -scale, 0.0, 1.0), "right");
+        relative_near(left.delta_e_2000(neutral), 1.5 * scale);
+        relative_near(left.delta_e_2000(right), 3.0 * scale);
+        relative_near(right.delta_e_2000(left), 3.0 * scale);
+        let up = testing::expect_ok(Lab::new(50.0, 0.0, scale, 1.0), "up");
+        let down = testing::expect_ok(Lab::new(50.0, 0.0, -scale, 1.0), "down");
+        relative_near(up.delta_e_2000(down), 2.0 * scale);
+        testing::assert_eq(left.delta_e_2000(left), 0.0);
+    }
+}
