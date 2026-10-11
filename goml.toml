@@ -2,4 +2,4 @@
 path = "ecosystem::color"
 
 [dev-dependencies]
-"ecosystem::verification" = true
+"ecosystem::testkit" = true

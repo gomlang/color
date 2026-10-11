@@ -210,7 +210,7 @@ the achromatic borrowing threshold applies only to interpolation.
 
 ## Verification and sources
 
-From the repository root, `(cd ../verification && just ecosystem-test color)` formats/checks,
+From the repository root, `(cd ../workflows && just ecosystem-test color)` formats/checks,
 tests the library and example, verifies cached builds, runs a theme
 palette example, and runs 4,659 independent reference vectors in the example’s ordinary GoML tests. No Python runtime or network access is needed.
 
@@ -238,12 +238,12 @@ Mathematical definitions, reference matrices and data provenance:
 
 ## Development and examples
 
-Requires the [current GoML toolchain](https://github.com/gomlang/verification/blob/main/ci/toolchain.json) with unversioned registry support. The `examples/basic/` example shares the root manifest; test-only helpers are declared in `[dev-dependencies]`. From the library root, run:
+Requires the [current GoML toolchain](https://github.com/gomlang/workflows/blob/main/ci/toolchain.json) with unversioned registry support. The `examples/basic/` example shares the root manifest; test-only helpers are declared in `[dev-dependencies]`. From the library root, run:
 
 ```sh
 goml run --example basic
 goml test
-(cd ../verification && just ecosystem-test color)
+(cd ../workflows && just ecosystem-test color)
 ```
 
-`goml test` builds the example and runs its tests. `(cd ../verification && just ecosystem-test color)` runs the library-specific smoke and compatibility checks.
+`goml test` builds the example and runs its tests. `(cd ../workflows && just ecosystem-test color)` runs the library-specific smoke and compatibility checks.
