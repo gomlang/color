@@ -9,7 +9,7 @@ state.
 
 ```toml
 [dependencies]
-"ecosystem::color" = "0.1.0"
+"ecosystem::color" = true
 ```
 
 ```goml
@@ -217,7 +217,7 @@ palette example, and runs 4,659 independent reference vectors in the example’s
 The GoML suite covers constructor errors, transfer thresholds, a 343-color
 conversion grid, extended signed channels, gamut mapping, premultiplied alpha,
 CSS grammar failures, hue paths, gradient snapshots and hard edges, contrast,
-color difference, and subnormal-alpha mixing across all six interpolation spaces. `goml verify` checks the example against the published dependency interface.
+color difference, and subnormal-alpha mixing across all six interpolation spaces. The ecosystem verifier checks the example using an isolated registry snapshot.
 The reference vectors record comparisons of deterministic random colors with `colorsys`, an
 independent rational-matrix implementation, linear compositing and mixing;
 it checks all CSS names, all 34 published CIEDE2000 test pairs, and 810 alpha-boundary
@@ -238,12 +238,12 @@ Mathematical definitions, reference matrices and data provenance:
 
 ## Development and examples
 
-Requires GoML 0.1.56 or newer. The `examples/basic/` example shares the root manifest; test-only helpers are declared in `[dev-dependencies]`. From the library root, run:
+Requires the [current GoML toolchain](https://github.com/gomlang/verification/blob/main/ci/toolchain.json) with unversioned registry support. The `examples/basic/` example shares the root manifest; test-only helpers are declared in `[dev-dependencies]`. From the library root, run:
 
 ```sh
 goml run --example basic
 goml test
-goml verify --timeout 300s
+(cd ../verification && just ecosystem-test color)
 ```
 
-`goml test` builds the example and runs its tests. `goml verify` repeats the example checks as an independent module against an isolated registry snapshot. `(cd ../verification && just ecosystem-test color)` also retains the library-specific smoke and compatibility checks.
+`goml test` builds the example and runs its tests. `(cd ../verification && just ecosystem-test color)` runs the library-specific smoke and compatibility checks.
