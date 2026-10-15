@@ -95,7 +95,7 @@ fn hue(value: f64) -> f64 {
     }
 }
 
-fn byte(value: f64) -> u8 {
+fn channel_byte(value: f64) -> u8 {
     match math::round(clamp(value, 0.0, 1.0) * 255.0).try_to_u8() {
         Ok(value) => value,
         Err(_) => 0,
@@ -196,11 +196,11 @@ impl Srgb {
     }
 
     pub fn to_rgb8(self: Srgb) -> (u8, u8, u8) {
-        (byte(self.r), byte(self.g), byte(self.b))
+        (channel_byte(self.r), channel_byte(self.g), channel_byte(self.b))
     }
 
     pub fn to_rgba8(self: Srgb) -> (u8, u8, u8, u8) {
-        (byte(self.r), byte(self.g), byte(self.b), byte(self.alpha))
+        (channel_byte(self.r), channel_byte(self.g), channel_byte(self.b), channel_byte(self.alpha))
     }
 
     pub fn to_linear(self: Srgb) -> LinearRgb {

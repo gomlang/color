@@ -191,7 +191,12 @@ impl Rgba16 {
 
 impl Srgb {
     pub fn to_nrgba8(self: Srgb) -> Nrgba8 {
-        Nrgba8::new(byte(self.r), byte(self.g), byte(self.b), byte(self.alpha))
+        Nrgba8::new(
+            channel_byte(self.r),
+            channel_byte(self.g),
+            channel_byte(self.b),
+            channel_byte(self.alpha),
+        )
     }
 
     pub fn to_premultiplied_rgba8(self: Srgb) -> Rgba8 {

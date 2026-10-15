@@ -253,11 +253,12 @@ fn hex_byte(value: u8) -> string {
 
 impl Srgb {
     pub fn to_hex(self: Srgb) -> string {
-        "#" + hex_byte(byte(self.r)) + hex_byte(byte(self.g)) + hex_byte(byte(self.b))
+        "#" + hex_byte(channel_byte(self.r)) + hex_byte(channel_byte(self.g))
+            + hex_byte(channel_byte(self.b))
     }
 
     pub fn to_hex_alpha(self: Srgb) -> string {
-        self.to_hex() + hex_byte(byte(self.alpha))
+        self.to_hex() + hex_byte(channel_byte(self.alpha))
     }
 
     pub fn to_css(self: Srgb) -> string {
